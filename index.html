@@ -1,0 +1,2166 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ระบบขอใช้อาคารสถานที่ - โรงเรียนศรีวารินทร์</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Kanit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            kanit: ['Kanit', 'sans-serif'],
+          },
+          colors: {
+            brandBlue: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#2563eb',
+              600: '#1d4ed8',
+              700: '#1e40af',
+              800: '#1e3a8a',
+              900: '#172554',
+            },
+            brandPink: {
+              50: '#fdf2f8',
+              100: '#fce7f3',
+              400: '#f472b6',
+              500: '#ec4899',
+              600: '#db2777',
+              700: '#be185d',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * {
+      font-family: 'Kanit', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #eff6ff 0%, #fdf2f8 50%, #f0f9ff 100%);
+      min-height: 100vh;
+    }
+
+    /* Smooth Marquee Animation */
+    .marquee-container {
+      overflow: hidden;
+      white-space: nowrap;
+      position: relative;
+    }
+
+    .marquee-content {
+      display: inline-block;
+      padding-left: 100%;
+      animation: marqueeScroll 24s linear infinite;
+    }
+
+    .marquee-container:hover .marquee-content {
+      animation-play-state: paused;
+    }
+
+    @keyframes marqueeScroll {
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-100%); }
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #2563eb, #ec4899);
+      border-radius: 10px;
+    }
+
+    /* SweetAlert2 Font Override */
+    .swal2-popup {
+      font-family: 'Kanit', sans-serif !important;
+      border-radius: 1.25rem !important;
+    }
+
+    /* Calendar Day Hover */
+    .cal-day {
+      transition: all 0.2s ease;
+    }
+    .cal-day:hover {
+      background-color: #fdf2f8;
+    }
+  </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen">
+
+  <!-- ==================== HEADER / NAVBAR ==================== -->
+  <header class="sticky top-0 z-40 bg-gradient-to-r from-brandBlue-800 via-brandBlue-700 to-brandPink-600 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 sm:h-20">
+        <!-- Logo & Title -->
+        <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('calendar')">
+          <div class="bg-white p-1 rounded-2xl shadow-md shrink-0">
+            <img
+              src="https://img2.pic.in.th/logo-SW.png"
+              onerror="this.onerror=null;this.src='https://placehold.co/80x80/1e3a8a/ffffff?text=SW';"
+              alt="โลโก้โรงเรียนศรีวารินทร์"
+              class="w-10 h-10 sm:w-12 sm:h-12 object-contain rounded-xl"
+            />
+          </div>
+          <div>
+            <h1 class="text-base sm:text-xl font-bold leading-tight tracking-wide">
+              ระบบขอใช้อาคารสถานที่
+            </h1>
+            <p class="text-xs sm:text-sm text-pink-100 font-light">
+              โรงเรียนศรีวารินทร์ - สพม. นราธิวาส
+            </p>
+          </div>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <nav class="hidden md:flex items-center gap-2">
+          <button onclick="switchView('calendar')" id="nav-calendar" class="nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 bg-white/20 hover:bg-white/30">
+            <i class="fa-solid fa-calendar-days"></i> หน้าแรก
+          </button>
+          <button onclick="openBookingWithNotice()" id="nav-booking" class="nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 bg-brandPink-500 hover:bg-brandPink-400 shadow-md">
+            <i class="fa-solid fa-file-signature"></i> ขอใช้อาคารสถานที่
+          </button>
+          <button onclick="switchView('history')" id="nav-history" class="nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 hover:bg-white/20">
+            <i class="fa-solid fa-clock-rotate-left"></i> ประวัติขอใช้
+          </button>
+          <button onclick="switchView('admin')" id="nav-admin" class="nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 hover:bg-white/20">
+            <i class="fa-solid fa-user-shield"></i> ผู้ดูแลระบบ
+          </button>
+        </nav>
+
+        <!-- Mobile Menu Toggle -->
+        <button onclick="toggleMobileMenu()" class="md:hidden p-2.5 rounded-xl bg-white/15 hover:bg-white/25 transition">
+          <i class="fa-solid fa-bars text-xl"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Dropdown -->
+    <div id="mobile-menu" class="hidden md:hidden bg-brandBlue-900/95 backdrop-blur-md border-t border-white/10 px-4 py-3 space-y-2">
+      <button onclick="switchView('calendar'); toggleMobileMenu();" class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 flex items-center gap-3 text-sm font-medium">
+        <i class="fa-solid fa-calendar-days w-5 text-pink-300"></i> หน้าแรก (ปฏิทินรายเดือน)
+      </button>
+      <button onclick="openBookingWithNotice(); toggleMobileMenu();" class="w-full text-left px-4 py-3 rounded-xl bg-brandPink-600 hover:bg-brandPink-500 flex items-center gap-3 text-sm font-medium shadow">
+        <i class="fa-solid fa-file-signature w-5"></i> ขอใช้อาคารสถานที่
+      </button>
+      <button onclick="switchView('history'); toggleMobileMenu();" class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 flex items-center gap-3 text-sm font-medium">
+        <i class="fa-solid fa-clock-rotate-left w-5 text-pink-300"></i> ประวัติขอใช้
+      </button>
+      <button onclick="switchView('admin'); toggleMobileMenu();" class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 flex items-center gap-3 text-sm font-medium">
+        <i class="fa-solid fa-user-shield w-5 text-pink-300"></i> ผู้ดูแลระบบ
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== MARQUEE ANNOUNCEMENT BAR ==================== -->
+  <div class="bg-gradient-to-r from-brandPink-500 via-fuchsia-600 to-brandBlue-600 text-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-2 flex items-center gap-3">
+      <span class="bg-white text-brandPink-600 text-xs font-bold px-3 py-1 rounded-full shrink-0 shadow-sm flex items-center gap-1.5">
+        <i class="fa-solid fa-bullhorn animate-pulse"></i> ประชาสัมพันธ์
+      </span>
+      <div class="marquee-container flex-1 text-sm font-normal">
+        <div id="marquee-text" class="marquee-content">
+          ยินดีต้อนรับสู่ระบบขอใช้อาคารสถานที่ โรงเรียนศรีวารินทร์ กรุณาจองล่วงหน้าอย่างน้อย 3 วันทำการ เพื่อความสะดวกในการจัดเตรียมสถานที่และอุปกรณ์
+        </div>
+      </div>
+      <div id="db-status-badge" class="hidden sm:flex items-center gap-1.5 text-xs bg-black/20 px-3 py-1 rounded-full shrink-0" title="สถานะการเชื่อมต่อฐานข้อมูล">
+        <span class="w-2 h-2 rounded-full bg-yellow-300 animate-ping"></span>
+        <span>กำลังเชื่อมต่อ...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+    <!-- ==================== VIEW 1: CALENDAR (HOME) ==================== -->
+    <section id="view-calendar" class="space-y-6">
+      <!-- Quick Action & Stats Banner -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-sm border border-blue-100 flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-blue-100 text-brandBlue-600 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-calendar-check"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500">คำขอทั้งหมด</p>
+            <p id="stat-total" class="text-2xl font-bold text-brandBlue-800">0</p>
+          </div>
+        </div>
+        <div class="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-sm border border-emerald-100 flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500">อนุมัติแล้ว</p>
+            <p id="stat-approved" class="text-2xl font-bold text-emerald-600">0</p>
+          </div>
+        </div>
+        <div class="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-sm border border-amber-100 flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-hourglass-half"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500">รออนุมัติ</p>
+            <p id="stat-pending" class="text-2xl font-bold text-amber-600">0</p>
+          </div>
+        </div>
+        <div class="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-sm border border-pink-100 flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-pink-100 text-brandPink-600 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-box-open"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500">คืนอุปกรณ์แล้ว</p>
+            <p id="stat-returned" class="text-2xl font-bold text-brandPink-600">0</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendar Card -->
+      <div class="bg-white rounded-3xl shadow-md border border-blue-100 overflow-hidden">
+        <!-- Calendar Header -->
+        <div class="bg-gradient-to-r from-brandBlue-700 to-brandPink-600 text-white p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <button onclick="changeMonth(-1)" class="w-10 h-10 rounded-xl bg-white/15 hover:bg-white/25 flex items-center justify-center transition">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <h2 id="calendar-month-title" class="text-xl sm:text-2xl font-bold min-w-[200px] text-center">
+              พฤศจิกายน 2569
+            </h2>
+            <button onclick="changeMonth(1)" class="w-10 h-10 rounded-xl bg-white/15 hover:bg-white/25 flex items-center justify-center transition">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-center gap-3 text-xs sm:text-sm">
+            <span class="flex items-center gap-1.5 bg-white/15 px-3 py-1.5 rounded-full">
+              <span class="w-3 h-3 rounded-full bg-emerald-400 border border-white"></span> อนุมัติแล้ว
+            </span>
+            <span class="flex items-center gap-1.5 bg-white/15 px-3 py-1.5 rounded-full">
+              <span class="w-3 h-3 rounded-full bg-amber-300 border border-white"></span> รออนุมัติ
+            </span>
+            <button onclick="goToToday()" class="px-3.5 py-1.5 rounded-full bg-white text-brandBlue-800 font-semibold hover:bg-pink-50 transition shadow-sm">
+              <i class="fa-solid fa-calendar-day mr-1"></i> วันนี้
+            </button>
+          </div>
+        </div>
+
+        <!-- Days of Week Header -->
+        <div class="grid grid-cols-7 bg-blue-50/70 border-b border-blue-100 text-center text-xs sm:text-sm font-semibold text-brandBlue-800">
+          <div class="py-3 text-rose-500">อา.</div>
+          <div class="py-3">จ.</div>
+          <div class="py-3">อ.</div>
+          <div class="py-3">พ.</div>
+          <div class="py-3">พฤ.</div>
+          <div class="py-3">ศ.</div>
+          <div class="py-3 text-purple-600">ส.</div>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div id="calendar-grid" class="grid grid-cols-7 divide-x divide-y divide-slate-100">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+
+      <!-- Upcoming Bookings List (Great for Mobile & Quick Overview) -->
+      <div class="bg-white rounded-3xl shadow-md border border-pink-100 p-5 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <h3 class="text-lg font-bold text-brandBlue-800 flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-brandPink-500"></i> รายการจองประจำเดือนนี้
+          </h3>
+          <button onclick="openBookingWithNotice()" class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-brandBlue-600 to-brandPink-500 text-white text-sm font-medium shadow hover:opacity-95 transition">
+            <i class="fa-solid fa-plus-circle"></i> ขอใช้อาคารสถานที่ใหม่
+          </button>
+        </div>
+        <div id="monthly-booking-list" class="space-y-3">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 2: BOOKING FORM ==================== -->
+    <section id="view-booking" class="hidden max-w-4xl mx-auto">
+      <div class="bg-white rounded-3xl shadow-lg border border-blue-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-brandBlue-700 via-brandBlue-600 to-brandPink-500 text-white p-6">
+          <h2 class="text-xl sm:text-2xl font-bold flex items-center gap-2.5">
+            <i class="fa-solid fa-file-signature"></i> แบบฟอร์มขอใช้อาคารสถานที่
+          </h2>
+          <p class="text-sm text-blue-100 mt-1">กรุณากรอกข้อมูลให้ครบถ้วนเพื่อส่งคำขออนุมัติไปยังผู้ดูแลระบบ</p>
+        </div>
+
+        <form id="booking-form" onsubmit="handleBookingSubmit(event)" class="p-5 sm:p-8 space-y-6">
+          <!-- Section 1: Requester Info -->
+          <div>
+            <h3 class="text-base font-semibold text-brandBlue-800 border-b border-pink-100 pb-2 mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-user-tie text-brandPink-500"></i> ข้อมูลผู้ขอใช้สถานที่
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">ชื่อ-นามสกุล (ผู้ขอ) <span class="text-rose-500">*</span></label>
+                <input type="text" id="req-name" required placeholder="เช่น นายสมชาย ใจดี" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brandPink-400 focus:border-brandPink-400 outline-none transition" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">เบอร์ติดต่อ <span class="text-rose-500">*</span></label>
+                <input type="tel" id="req-phone" required placeholder="08X-XXX-XXXX" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brandPink-400 focus:border-brandPink-400 outline-none transition" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Line ID <span class="text-rose-500">*</span></label>
+                <input type="text" id="req-line" required placeholder="ระบุไอดีไลน์สำหรับติดต่อกลับ" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brandPink-400 focus:border-brandPink-400 outline-none transition" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">หน่วยงานที่สังกัด <span class="text-rose-500">*</span></label>
+                <input type="text" id="req-dept" required placeholder="เช่น กลุ่มสาระฯ วิทยาศาสตร์ / ฝ่ายบริหารทั่วไป" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brandPink-400 focus:border-brandPink-400 outline-none transition" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Event & Room Info -->
+          <div>
+            <h3 class="text-base font-semibold text-brandBlue-800 border-b border-pink-100 pb-2 mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-building-columns text-brandPink-500"></i> รายละเอียดการขอใช้สถานที่และวันเวลา
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="sm:col-span-2">
+                <label class="block text-sm font-medium text-slate-700 mb-1">วัตถุประสงค์ขอใช้ <span class="text-rose-500">*</span></label>
+                <textarea id="req-purpose" rows="2" required placeholder="ระบุชื่อโครงการ การประชุม หรือกิจกรรมที่จะจัดขึ้น" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brandPink-400 focus:border-brandPink-400 outline-none transition"></textarea>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">ประสงค์ใช้อาคาร/ห้อง <span class="text-rose-500">*</span></label>
+                <select id="req-room" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-brandPink-400 focus:border-brandPink-400 outline-none transition">
+                  <!-- Populated from Admin Rooms -->
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">จำนวนผู้เข้าร่วม (คน) <span class="text-rose-500">*</span></label>
+                <input type="number" id="req-participants" min="1" required placeholder="เช่น 50" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brandPink-400 focus:border-brandPink-400 outline-none transition" />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">วันที่เริ่มใช้ และเวลา <span class="text-rose-500">*</span></label>
+                <input type="datetime-local" id="req-start" required onchange="calculateDuration()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brandPink-400 focus:border-brandPink-400 outline-none transition" />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">ถึงวันที่ และเวลา <span class="text-rose-500">*</span></label>
+                <input type="datetime-local" id="req-end" required onchange="calculateDuration()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brandPink-400 focus:border-brandPink-400 outline-none transition" />
+              </div>
+
+              <!-- Auto Duration Display -->
+              <div class="sm:col-span-2">
+                <div id="duration-display" class="bg-gradient-to-r from-blue-50 to-pink-50 border border-blue-200 rounded-2xl p-3.5 flex items-center gap-3 text-sm text-brandBlue-800">
+                  <i class="fa-solid fa-clock text-brandPink-500 text-lg"></i>
+                  <span>ระบบคำนวณระยะเวลาอัตโนมัติ: <strong id="duration-text">กรุณาเลือกวันและเวลาเริ่มต้น-สิ้นสุด</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Equipment Selection -->
+          <div>
+            <h3 class="text-base font-semibold text-brandBlue-800 border-b border-pink-100 pb-2 mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-screwdriver-wrench text-brandPink-500"></i> อุปกรณ์ที่ขอใช้ (เลือกได้หลายรายการ พร้อมระบุจำนวน)
+            </h3>
+            <div id="equipment-checklist" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              <!-- Populated dynamically from Admin Equipment List -->
+            </div>
+
+            <!-- Other Custom Equipment -->
+            <div class="bg-pink-50/60 border border-pink-200 rounded-2xl p-4">
+              <label class="flex items-center gap-2 cursor-pointer font-medium text-sm text-brandPink-700 mb-2">
+                <input type="checkbox" id="eq-other-check" onchange="toggleOtherEquipment()" class="w-4 h-4 accent-brandPink-600 rounded" />
+                <span>อื่นๆ (ระบุรายการอุปกรณ์และจำนวนเพิ่มเติมเอง)</span>
+              </label>
+              <div id="eq-other-box" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
+                <input type="text" id="eq-other-name" placeholder="ระบุชื่ออุปกรณ์ เช่น กล้องถ่ายรูป, ขาตั้ง" class="sm:col-span-2 px-3.5 py-2 rounded-xl border border-pink-200 bg-white text-sm outline-none focus:ring-2 focus:ring-brandPink-400" />
+                <input type="number" id="eq-other-qty" min="1" value="1" placeholder="จำนวน" class="px-3.5 py-2 rounded-xl border border-pink-200 bg-white text-sm outline-none focus:ring-2 focus:ring-brandPink-400" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Buttons -->
+          <div class="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <button type="button" onclick="switchView('calendar')" class="w-full sm:w-auto px-6 py-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 font-medium transition">
+              ยกเลิก
+            </button>
+            <button type="submit" id="btn-submit-booking" class="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-brandBlue-600 to-brandPink-500 hover:from-brandBlue-700 hover:to-brandPink-600 text-white font-semibold shadow-md transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-paper-plane"></i> ส่งคำขอใช้อาคารสถานที่
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 3: BOOKING HISTORY ==================== -->
+    <section id="view-history" class="hidden space-y-5">
+      <div class="bg-white rounded-3xl shadow-md border border-blue-100 p-5 sm:p-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-brandBlue-800 flex items-center gap-2">
+              <i class="fa-solid fa-clock-rotate-left text-brandPink-500"></i> ประวัติการขอใช้อาคารสถานที่
+            </h2>
+            <p class="text-sm text-slate-500">ตรวจสอบสถานะการอนุมัติและรายละเอียดการขอใช้ทั้งหมด</p>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-2.5">
+            <div class="relative">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+              <input type="text" id="history-search" oninput="onHistoryFilterChange()" placeholder="ค้นหาชื่อ, ห้อง, หน่วยงาน..." class="w-full sm:w-64 pl-9 pr-4 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-brandBlue-400 outline-none" />
+            </div>
+            <select id="history-filter" onchange="onHistoryFilterChange()" class="px-3.5 py-2 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-brandBlue-400 outline-none">
+              <option value="all">ทุกสถานะ</option>
+              <option value="pending">รออนุมัติ</option>
+              <option value="approved">อนุมัติแล้ว</option>
+              <option value="rejected">ไม่อนุมัติ</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="history-list" class="space-y-3">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 4: ADMIN PANEL ==================== -->
+    <section id="view-admin" class="hidden space-y-6">
+
+      <!-- Admin Login / First-time Setup Card -->
+      <div id="admin-auth-card" class="max-w-md mx-auto bg-white rounded-3xl shadow-lg border border-pink-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-brandBlue-800 to-brandPink-600 text-white p-6 text-center">
+          <div class="w-16 h-16 bg-white/20 rounded-2xl mx-auto flex items-center justify-center text-3xl mb-3">
+            <i class="fa-solid fa-user-shield"></i>
+          </div>
+          <h2 id="admin-auth-title" class="text-xl font-bold">เข้าสู่ระบบผู้ดูแลระบบ</h2>
+          <p id="admin-auth-subtitle" class="text-xs text-pink-100 mt-1">รหัสผ่านถูกเข้ารหัสและจัดเก็บอย่างปลอดภัยในฐานข้อมูล</p>
+        </div>
+
+        <!-- Mode A: Normal Login (when PIN hash exists in DB) -->
+        <form id="admin-login-form" onsubmit="handleAdminLogin(event)" class="p-6 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1.5">กรอกรหัสผ่านผู้ดูแลระบบ (6 หลัก)</label>
+            <input type="password" id="admin-pin-input" maxlength="12" required placeholder="••••••" class="w-full text-center tracking-[0.5em] text-2xl font-bold px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brandPink-500 outline-none" />
+          </div>
+          <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-brandBlue-600 to-brandPink-500 text-white font-semibold shadow-md hover:opacity-95 transition">
+            <i class="fa-solid fa-right-to-bracket mr-2"></i> เข้าสู่ระบบ
+          </button>
+        </form>
+
+        <!-- Mode B: First-Time PIN Setup (so PIN is NEVER hardcoded in source code) -->
+        <form id="admin-setup-form" onsubmit="handleAdminFirstSetup(event)" class="hidden p-6 space-y-4">
+          <div class="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-xl p-3 leading-relaxed">
+            <i class="fa-solid fa-shield-halved mr-1"></i>
+            <strong>ตรวจพบการใช้งานครั้งแรก:</strong> ยังไม่พบรหัสผ่านผู้ดูแลระบบในฐานข้อมูล กรุณากำหนดรหัสผ่านเริ่มต้น (เช่น รหัส 6 หลักที่คุณต้องการ) เพื่อเข้ารหัส SHA-256 และบันทึกลงฐานข้อมูลอย่างปลอดภัย
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">กำหนดรหัสผ่านผู้ดูแลระบบใหม่</label>
+            <input type="password" id="setup-pin-1" required minlength="6" placeholder="กรอกรหัสผ่านอย่างน้อย 6 หลัก" class="w-full text-center tracking-[0.3em] text-lg font-bold px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brandBlue-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">ยืนยันรหัสผ่านอีกครั้ง</label>
+            <input type="password" id="setup-pin-2" required minlength="6" placeholder="ยืนยันรหัสผ่าน" class="w-full text-center tracking-[0.3em] text-lg font-bold px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brandBlue-500 outline-none" />
+          </div>
+          <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-brandBlue-600 text-white font-semibold shadow-md hover:opacity-95 transition">
+            <i class="fa-solid fa-key mr-2"></i> บันทึกรหัสผ่านลงฐานข้อมูลและเข้าใช้งาน
+          </button>
+        </form>
+      </div>
+
+      <!-- Admin Dashboard (Visible after login) -->
+      <div id="admin-dashboard" class="hidden space-y-6">
+        <!-- Admin Top Bar -->
+        <div class="bg-white rounded-3xl shadow-sm border border-blue-100 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-brandBlue-600 to-brandPink-500 text-white flex items-center justify-center text-lg shadow">
+              <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-brandBlue-800">ระบบจัดการผู้ดูแลระบบ (Admin Panel)</h2>
+              <p class="text-xs text-slate-500">อนุมัติคำขอ บันทึกส่งคืนอุปกรณ์ จัดการห้อง/อุปกรณ์ และตั้งค่า Telegram</p>
+            </div>
+          </div>
+          <button onclick="logoutAdmin()" class="px-4 py-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 text-sm font-medium transition flex items-center gap-2">
+            <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบแอดมิน
+          </button>
+        </div>
+
+        <!-- Admin Sub-navigation Tabs -->
+        <div class="flex flex-wrap gap-2">
+          <button onclick="switchAdminTab('approvals')" id="tab-btn-approvals" class="admin-tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 bg-brandBlue-700 text-white shadow">
+            <i class="fa-solid fa-clipboard-check"></i> จัดการคำขออนุมัติ
+            <span id="badge-pending-count" class="bg-amber-400 text-slate-900 text-xs px-2 py-0.5 rounded-full">0</span>
+          </button>
+          <button onclick="switchAdminTab('returns')" id="tab-btn-returns" class="admin-tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 bg-white text-slate-700 border border-slate-200 hover:bg-pink-50">
+            <i class="fa-solid fa-boxes-packing"></i> แบบบันทึกส่งคืนอุปกรณ์
+          </button>
+          <button onclick="switchAdminTab('resources')" id="tab-btn-resources" class="admin-tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 bg-white text-slate-700 border border-slate-200 hover:bg-pink-50">
+            <i class="fa-solid fa-building"></i> อาคาร/ห้อง & อุปกรณ์
+          </button>
+          <button onclick="switchAdminTab('settings')" id="tab-btn-settings" class="admin-tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 bg-white text-slate-700 border border-slate-200 hover:bg-pink-50">
+            <i class="fa-solid fa-sliders"></i> ตั้งค่าระบบ & Telegram
+          </button>
+        </div>
+
+        <!-- TAB 1: APPROVALS -->
+        <div id="admin-tab-approvals" class="bg-white rounded-3xl shadow-md border border-blue-100 p-5 sm:p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-bold text-brandBlue-800">รายการคำขอใช้อาคารสถานที่</h3>
+            <span class="text-xs text-slate-500">ก่อนอนุมัติ แอดมินสามารถระบุ/ปรับแก้รายการอุปกรณ์ที่ยืมได้</span>
+          </div>
+          <div id="admin-approvals-list" class="space-y-3">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- TAB 2: EQUIPMENT RETURN SUBSYSTEM -->
+        <div id="admin-tab-returns" class="hidden bg-white rounded-3xl shadow-md border border-pink-100 p-5 sm:p-6 space-y-4">
+          <div>
+            <h3 class="text-lg font-bold text-brandBlue-800 flex items-center gap-2">
+              <i class="fa-solid fa-boxes-packing text-brandPink-500"></i> แบบบันทึกส่งคืนอุปกรณ์
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">ตรวจสอบรายการอุปกรณ์ที่อนุมัติให้ยืม บันทึกสภาพการส่งคืน (สมบูรณ์ / ไม่สมบูรณ์พร้อมหมายเหตุ) และกดยืนยัน</p>
+          </div>
+          <div id="admin-returns-list" class="space-y-4">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- TAB 3: ROOMS & EQUIPMENT MANAGEMENT -->
+        <div id="admin-tab-resources" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Manage Rooms -->
+          <div class="bg-white rounded-3xl shadow-md border border-blue-100 p-5 sm:p-6 space-y-4">
+            <h3 class="text-lg font-bold text-brandBlue-800 flex items-center gap-2">
+              <i class="fa-solid fa-door-open text-brandBlue-600"></i> จัดการอาคาร/ห้อง
+            </h3>
+            <div class="flex gap-2">
+              <input type="text" id="new-room-input" placeholder="เช่น หอประชุมศรีวารินทร์ / ห้องโสตฯ" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-brandBlue-400" />
+              <button onclick="addRoom()" class="px-4 py-2.5 rounded-xl bg-brandBlue-600 hover:bg-brandBlue-700 text-white text-sm font-medium shrink-0 transition">
+                <i class="fa-solid fa-plus"></i> เพิ่ม
+              </button>
+            </div>
+            <ul id="admin-rooms-list" class="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+              <!-- Populated dynamically -->
+            </ul>
+          </div>
+
+          <!-- Manage Equipment -->
+          <div class="bg-white rounded-3xl shadow-md border border-pink-100 p-5 sm:p-6 space-y-4">
+            <h3 class="text-lg font-bold text-brandPink-700 flex items-center gap-2">
+              <i class="fa-solid fa-microphone-lines text-brandPink-500"></i> จัดการรายการอุปกรณ์
+            </h3>
+            <div class="flex gap-2">
+              <input type="text" id="new-eq-input" placeholder="เช่น ไมโครโฟนไร้สาย / โปรเจคเตอร์" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-brandPink-400" />
+              <button onclick="addEquipment()" class="px-4 py-2.5 rounded-xl bg-brandPink-600 hover:bg-brandPink-700 text-white text-sm font-medium shrink-0 transition">
+                <i class="fa-solid fa-plus"></i> เพิ่ม
+              </button>
+            </div>
+            <ul id="admin-eq-list" class="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+              <!-- Populated dynamically -->
+            </ul>
+          </div>
+        </div>
+
+        <!-- TAB 4: SYSTEM SETTINGS & TELEGRAM -->
+        <div id="admin-tab-settings" class="hidden space-y-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Marquee & Popup Text -->
+            <div class="bg-white rounded-3xl shadow-md border border-blue-100 p-5 sm:p-6 space-y-4">
+              <h3 class="text-lg font-bold text-brandBlue-800 flex items-center gap-2">
+                <i class="fa-solid fa-bullhorn text-brandPink-500"></i> ข้อความประชาสัมพันธ์และ Popup
+              </h3>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">ข้อความวิ่งประชาสัมพันธ์ (Marquee Bar)</label>
+                <textarea id="setting-marquee" rows="2" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-brandBlue-400 outline-none"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">ข้อความแจ้งเตือน Popup (เมื่อกดเมนู "ขอใช้อาคารสถานที่")</label>
+                <textarea id="setting-popup" rows="4" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-brandPink-400 outline-none"></textarea>
+              </div>
+              <button onclick="saveGeneralSettings()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-brandBlue-600 to-brandPink-500 text-white font-medium shadow hover:opacity-95 transition">
+                <i class="fa-solid fa-floppy-disk mr-1.5"></i> บันทึกข้อความทั้งหมด
+              </button>
+            </div>
+
+            <!-- Telegram Notification Settings -->
+            <div class="bg-white rounded-3xl shadow-md border border-blue-100 p-5 sm:p-6 space-y-4">
+              <h3 class="text-lg font-bold text-sky-600 flex items-center gap-2">
+                <i class="fa-brands fa-telegram text-2xl"></i> ตั้งค่าแจ้งเตือนผ่านกลุ่ม Telegram
+              </h3>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Telegram Bot Token</label>
+                <input type="text" id="setting-tg-token" placeholder="เช่น 123456789:ABCdefGHIjklMNOpqrsTUVwxyz" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-sky-400 outline-none" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Group Chat ID (ขึ้นต้นด้วยเครื่องหมายลบ เช่น -100...)</label>
+                <input type="text" id="setting-tg-chatid" placeholder="เช่น -1001234567890" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-sky-400 outline-none" />
+              </div>
+              <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <input type="checkbox" id="setting-tg-enabled" class="w-4 h-4 accent-sky-600 rounded" />
+                <span>เปิดใช้งานการแจ้งเตือนอัตโนมัติเข้ากลุ่ม Telegram</span>
+              </label>
+              <div class="flex flex-col sm:flex-row gap-2.5 pt-1">
+                <button onclick="saveTelegramSettings()" class="flex-1 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium shadow transition">
+                  <i class="fa-solid fa-save mr-1"></i> บันทึกค่า Telegram
+                </button>
+                <button onclick="testTelegramNotification()" class="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium transition">
+                  <i class="fa-solid fa-paper-plane mr-1 text-sky-600"></i> ทดสอบส่งข้อความ
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Change Admin PIN -->
+          <div class="bg-white rounded-3xl shadow-md border border-pink-100 p-5 sm:p-6">
+            <h3 class="text-base font-bold text-brandBlue-800 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-lock text-brandPink-500"></i> เปลี่ยนรหัสผ่านผู้ดูแลระบบ (เข้ารหัส SHA-256 ในฐานข้อมูล)
+            </h3>
+            <div class="flex flex-col sm:flex-row gap-3">
+              <input type="password" id="change-pin-input" placeholder="กรอกรหัสผ่านใหม่ (อย่างน้อย 6 หลัก)" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-brandPink-400" />
+              <button onclick="changeAdminPin()" class="px-6 py-2.5 rounded-xl bg-brandPink-600 hover:bg-brandPink-700 text-white text-sm font-medium shadow transition">
+                <i class="fa-solid fa-key mr-1.5"></i> อัปเดตรหัสผ่านใหม่
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="bg-gradient-to-r from-brandBlue-900 via-brandBlue-800 to-brandPink-700 text-white mt-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-4 text-center md:text-left flex-col sm:flex-row">
+          <div class="bg-white p-1.5 rounded-2xl shadow-lg">
+            <img
+              src="https://img2.pic.in.th/logo-SW.png"
+              onerror="this.onerror=null;this.src='https://placehold.co/80x80/1e3a8a/ffffff?text=SW';"
+              alt="โลโก้โรงเรียนศรีวารินทร์"
+              class="w-14 h-14 object-contain rounded-xl"
+            />
+          </div>
+          <div>
+            <h4 class="text-lg font-bold tracking-wide">ระบบขอใช้อาคารสถานที่</h4>
+            <p class="text-sm text-pink-200">โรงเรียนศรีวารินทร์ - สพม. นราธิวาส</p>
+          </div>
+        </div>
+        <div class="text-center md:text-right text-sm text-blue-100 space-y-1">
+          <p class="font-medium text-white">&lt;\dev\&gt; อับดุลฮากิม อ๊ะหมะ</p>
+          <p class="text-xs text-pink-200">
+            <i class="fa-solid fa-envelope mr-1"></i> Mail : Abdulhakim.a@sriwarinschool.ac.th
+          </p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== FIREBASE & APPLICATION SCRIPT ==================== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      doc,
+      addDoc,
+      setDoc,
+      updateDoc,
+      deleteDoc,
+      onSnapshot,
+      query,
+      orderBy,
+      limit,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // =========================================================================
+    // 1. FIREBASE CONFIGURATION (Provided by User)
+    // =========================================================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyDzOmukTZTtZlTzNMZvAJerHJqqKfLysPE",
+      authDomain: "sriwarinnext.firebaseapp.com",
+      projectId: "sriwarinnext",
+      storageBucket: "sriwarinnext.firebasestorage.app",
+      messagingSenderId: "784856292449",
+      appId: "1:784856292449:web:79fe039cbfda2b90af1e20"
+    };
+
+    let db = null;
+    let isFirebaseConnected = false;
+    let unsubscribeBookings = null;
+
+    try {
+      const app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+    } catch (err) {
+      console.error("Firebase init error:", err);
+    }
+
+    // =========================================================================
+    // 2. APPLICATION STATE (In-memory cache synced with Firestore Realtime)
+    // =========================================================================
+    const state = {
+      currentView: 'calendar',
+      currentAdminTab: 'approvals',
+      isAdminLoggedIn: false,
+      calYear: new Date().getFullYear(),
+      calMonth: new Date().getMonth(),
+      monthlyLimit: 5,       // แสดงรายการจองประจำเดือนเริ่มต้น 5 รายการ
+      historyLimit: 5,       // แสดงประวัติการจองเริ่มต้น 5 รายการ
+      dbFetchLimit: 15,      // จำกัดจำนวนการอ่านเอกสารจาก Firestore ต่อรอบเพื่อประหยัดโควต้า
+      hasMoreInDb: false,
+      bookings: [],
+      rooms: [
+        "หอประชุมโรงเรียนศรีวารินทร์",
+        "ห้องประชุมศรีวารินทร์ (ชั้น 2)",
+        "ห้องโสตทัศนศึกษา",
+        "ลานอเนกประสงค์ (โดม)",
+        "ห้องปฏิบัติการคอมพิวเตอร์ 1"
+      ],
+      equipment: [
+        "ไมโครโฟนไร้สาย",
+        "เครื่องฉายโปรเจคเตอร์",
+        "ชุดเครื่องเสียงเคลื่อนที่",
+        "โต๊ะลงทะเบียนพร้อมผ้าคลุม",
+        "เก้าอี้พลาสติก",
+        "พัดลมไอน้ำ"
+      ],
+      settings: {
+        marqueeText: "ยินดีต้อนรับสู่ระบบขอใช้อาคารสถานที่ โรงเรียนศรีวารินทร์ กรุณาจองล่วงหน้าอย่างน้อย 3 วันทำการ เพื่อความสะดวกในการจัดเตรียมสถานที่และอุปกรณ์",
+        popupMessage: "ข้อตกลงการขอใช้อาคารสถานที่:\n1. กรุณาจองล่วงหน้าอย่างน้อย 3 วันทำการ\n2. ดูแลรักษาความสะอาดและปิดเครื่องใช้ไฟฟ้าทุกครั้งหลังใช้งาน\n3. กรณีมีการยืมอุปกรณ์ กรุณาส่งคืนเจ้าหน้าที่ในสภาพสมบูรณ์หลังเสร็จสิ้นกิจกรรม",
+        telegramBotToken: "",
+        telegramChatId: "",
+        telegramEnabled: false
+      },
+      adminPinHash: null // Loaded strictly from Firestore (NEVER hardcoded in code!)
+    };
+
+    const THAI_MONTHS = [
+      'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+      'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+    ];
+
+    // =========================================================================
+    // 3. UTILITIES & CRYPTO HELPER (SHA-256 Hashing for Admin PIN)
+    // =========================================================================
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function formatThaiDateTime(isoStr) {
+      if (!isoStr) return '-';
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return isoStr;
+      const day = d.getDate();
+      const month = THAI_MONTHS[d.getMonth()];
+      const year = d.getFullYear() + 543;
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      return `${day} ${month} ${year} เวลา ${hh}:${mm} น.`;
+    }
+
+    async function hashPin(pin) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(String(pin).trim());
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // =========================================================================
+    // 4. REALTIME FIRESTORE LISTENERS (Production Database Only)
+    // =========================================================================
+    function updateDbBadge(connected, label) {
+      const badge = document.getElementById('db-status-badge');
+      if (!badge) return;
+      const dotClass = connected ? 'bg-emerald-400' : 'bg-rose-400';
+      badge.innerHTML = `
+        <span class="w-2 h-2 rounded-full ${dotClass}"></span>
+        <span>${escapeHtml(label)}</span>
+      `;
+    }
+
+    function subscribeBookings() {
+      if (!db) {
+        updateDbBadge(false, 'ไม่พบการเชื่อมต่อ Firebase');
+        return;
+      }
+
+      if (typeof unsubscribeBookings === 'function') {
+        unsubscribeBookings();
+      }
+
+      const q = query(
+        collection(db, 'facility_bookings'),
+        orderBy('createdAt', 'desc'),
+        limit(state.dbFetchLimit)
+      );
+
+      unsubscribeBookings = onSnapshot(
+        q,
+        (snapshot) => {
+          isFirebaseConnected = true;
+          updateDbBadge(true, 'เชื่อมต่อฐานข้อมูลแล้ว');
+          state.bookings = snapshot.docs.map(docSnap => ({
+            id: docSnap.id,
+            ...docSnap.data()
+          }));
+          state.hasMoreInDb = snapshot.docs.length >= state.dbFetchLimit;
+          refreshAllUI();
+        },
+        (error) => {
+          console.error('Firestore bookings listener error:', error);
+          isFirebaseConnected = false;
+          updateDbBadge(false, 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ');
+          Swal.fire({
+            icon: 'error',
+            title: 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้',
+            text: 'กรุณาตรวจสอบการตั้งค่า Firestore Rules หรือการเชื่อมต่ออินเทอร์เน็ต (' + error.message + ')',
+            confirmButtonColor: '#ec4899'
+          });
+        }
+      );
+    }
+
+    function initRealtimeListeners() {
+      if (!db) {
+        updateDbBadge(false, 'เชื่อมต่อ Firebase ไม่สำเร็จ');
+        return;
+      }
+
+      // 1) Listen to Bookings (limited for read quota optimization)
+      subscribeBookings();
+
+      // 2) Listen to General Config (Rooms, Equipment, Marquee, Popup, Telegram)
+      onSnapshot(
+        doc(db, 'facility_config', 'general'),
+        (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (Array.isArray(data.rooms)) state.rooms = data.rooms;
+            if (Array.isArray(data.equipment)) state.equipment = data.equipment;
+            state.settings = {
+              marqueeText: data.marqueeText ?? state.settings.marqueeText,
+              popupMessage: data.popupMessage ?? state.settings.popupMessage,
+              telegramBotToken: data.telegramBotToken ?? '',
+              telegramChatId: data.telegramChatId ?? '',
+              telegramEnabled: !!data.telegramEnabled
+            };
+            refreshAllUI();
+          }
+        },
+        (error) => {
+          console.error('Firestore general config error:', error);
+        }
+      );
+
+      // 3) Listen to Admin Security Config (Hashed PIN stored only in Firestore)
+      onSnapshot(
+        doc(db, 'facility_config', 'security'),
+        (docSnap) => {
+          state.adminPinHash = docSnap.exists() ? (docSnap.data().pinHash || null) : null;
+          if (state.currentView === 'admin' && !state.isAdminLoggedIn) {
+            renderAdminAuthCard();
+          }
+        },
+        (error) => {
+          console.error('Firestore security config error:', error);
+        }
+      );
+    }
+
+    // =========================================================================
+    // 5. TELEGRAM GROUP NOTIFICATION
+    // =========================================================================
+    async function sendTelegramMessage(htmlText) {
+      const { telegramBotToken, telegramChatId, telegramEnabled } = state.settings;
+      if (!telegramEnabled || !telegramBotToken || !telegramChatId) {
+        return { ok: false, skipped: true };
+      }
+
+      try {
+        const url = `https://api.telegram.org/bot${encodeURIComponent(telegramBotToken)}/sendMessage`;
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: telegramChatId,
+            text: htmlText,
+            parse_mode: 'HTML'
+          })
+        });
+        const data = await resp.json();
+        return data.ok ? { ok: true } : { ok: false, error: data.description || 'Telegram API Error' };
+      } catch (err) {
+        console.error('Telegram send error:', err);
+        return { ok: false, error: err.message };
+      }
+    }
+
+    // =========================================================================
+    // 6. NAVIGATION & POPUP NOTICE
+    // =========================================================================
+    window.toggleMobileMenu = function () {
+      document.getElementById('mobile-menu').classList.toggle('hidden');
+    };
+
+    window.switchView = function (viewName) {
+      state.currentView = viewName;
+      ['calendar', 'booking', 'history', 'admin'].forEach(v => {
+        document.getElementById(`view-${v}`).classList.toggle('hidden', v !== viewName);
+        const btn = document.getElementById(`nav-${v}`);
+        if (btn) {
+          if (v === 'booking') {
+            btn.className = v === viewName
+              ? 'nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 bg-brandPink-400 ring-2 ring-white shadow-md'
+              : 'nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 bg-brandPink-500 hover:bg-brandPink-400 shadow-md';
+          } else {
+            btn.className = v === viewName
+              ? 'nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 bg-white/25 ring-1 ring-white/40'
+              : 'nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 hover:bg-white/20';
+          }
+        }
+      });
+
+      if (viewName === 'calendar') renderCalendar();
+      if (viewName === 'booking') renderBookingFormOptions();
+      if (viewName === 'history') renderHistory();
+      if (viewName === 'admin') renderAdminSection();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.openBookingWithNotice = function () {
+      const msg = (state.settings.popupMessage || '').trim();
+      if (!msg) {
+        switchView('booking');
+        return;
+      }
+
+      Swal.fire({
+        title: 'ข้อปฏิบัติการขอใช้อาคารสถานที่',
+        html: `<div class="text-left text-sm text-slate-700 whitespace-pre-line bg-blue-50/70 p-4 rounded-2xl border border-blue-100 leading-relaxed">${escapeHtml(msg)}</div>`,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'รับทราบและดำเนินการต่อ',
+        cancelButtonText: 'ปิด',
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#94a3b8'
+      }).then((res) => {
+        if (res.isConfirmed) {
+          switchView('booking');
+        }
+      });
+    };
+
+    // =========================================================================
+    // 7. CALENDAR & MONTHLY BOOKINGS (5 ITEMS PAGINATION)
+    // =========================================================================
+    window.changeMonth = function (delta) {
+      state.calMonth += delta;
+      if (state.calMonth < 0) {
+        state.calMonth = 11;
+        state.calYear -= 1;
+      } else if (state.calMonth > 11) {
+        state.calMonth = 0;
+        state.calYear += 1;
+      }
+      state.monthlyLimit = 5;
+      renderCalendar();
+    };
+
+    window.goToToday = function () {
+      const now = new Date();
+      state.calYear = now.getFullYear();
+      state.calMonth = now.getMonth();
+      state.monthlyLimit = 5;
+      renderCalendar();
+    };
+
+    function getBookingsForDate(year, month, day) {
+      const dayStart = new Date(year, month, day, 0, 0, 0).getTime();
+      const dayEnd = new Date(year, month, day, 23, 59, 59).getTime();
+
+      return state.bookings.filter(b => {
+        if (b.status !== 'approved' && b.status !== 'pending') return false;
+        const start = new Date(b.startDateTime).getTime();
+        const end = new Date(b.endDateTime).getTime();
+        if (isNaN(start) || isNaN(end)) return false;
+        return start <= dayEnd && end >= dayStart;
+      });
+    }
+
+    function renderCalendar() {
+      const titleEl = document.getElementById('calendar-month-title');
+      const gridEl = document.getElementById('calendar-grid');
+      if (!titleEl || !gridEl) return;
+
+      titleEl.textContent = `${THAI_MONTHS[state.calMonth]} ${state.calYear + 543}`;
+
+      const firstDayOfWeek = new Date(state.calYear, state.calMonth, 1).getDay();
+      const daysInMonth = new Date(state.calYear, state.calMonth + 1, 0).getDate();
+      const today = new Date();
+
+      let html = '';
+
+      // Leading empty cells
+      for (let i = 0; i < firstDayOfWeek; i++) {
+        html += `<div class="min-h-[84px] sm:min-h-[110px] bg-slate-50/50"></div>`;
+      }
+
+      // Month days
+      for (let day = 1; day <= daysInMonth; day++) {
+        const isToday =
+          day === today.getDate() &&
+          state.calMonth === today.getMonth() &&
+          state.calYear === today.getFullYear();
+
+        const dayBookings = getBookingsForDate(state.calYear, state.calMonth, day);
+        const pillsHtml = dayBookings.slice(0, 3).map(b => {
+          const pillColor = b.status === 'approved'
+            ? 'bg-emerald-500 text-white'
+            : 'bg-amber-400 text-slate-900';
+          return `
+            <div onclick="event.stopPropagation(); showBookingDetail('${b.id}')" class="truncate text-[10px] sm:text-xs px-1.5 py-0.5 rounded-md font-medium ${pillColor} shadow-xs hover:opacity-90">
+              ${escapeHtml(b.room)}
+            </div>
+          `;
+        }).join('');
+
+        const moreHtml = dayBookings.length > 3
+          ? `<div class="text-[10px] text-brandPink-600 font-semibold pl-1">+อีก ${dayBookings.length - 3} รายการ</div>`
+          : '';
+
+        html += `
+          <div onclick="showDayBookings(${state.calYear}, ${state.calMonth}, ${day})" class="cal-day cursor-pointer min-h-[84px] sm:min-h-[110px] p-1.5 sm:p-2 flex flex-col gap-1 ${isToday ? 'bg-blue-50/70' : 'bg-white'}">
+            <div class="flex items-center justify-between">
+              <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-xs sm:text-sm font-semibold ${isToday ? 'bg-gradient-to-r from-brandBlue-600 to-brandPink-500 text-white shadow' : 'text-slate-700'}">
+                ${day}
+              </span>
+              ${dayBookings.length > 0 ? `<span class="text-[10px] text-slate-400 hidden sm:inline">${dayBookings.length} งาน</span>` : ''}
+            </div>
+            <div class="space-y-1 overflow-hidden">
+              ${pillsHtml}
+              ${moreHtml}
+            </div>
+          </div>
+        `;
+      }
+
+      gridEl.innerHTML = html;
+      renderMonthlyBookingList();
+    }
+
+    function renderMonthlyBookingList() {
+      const container = document.getElementById('monthly-booking-list');
+      if (!container) return;
+
+      const monthStart = new Date(state.calYear, state.calMonth, 1, 0, 0, 0).getTime();
+      const monthEnd = new Date(state.calYear, state.calMonth + 1, 0, 23, 59, 59).getTime();
+
+      const monthBookings = state.bookings.filter(b => {
+        if (b.status === 'rejected') return false;
+        const start = new Date(b.startDateTime).getTime();
+        const end = new Date(b.endDateTime).getTime();
+        if (isNaN(start) || isNaN(end)) return false;
+        return start <= monthEnd && end >= monthStart;
+      });
+
+      if (monthBookings.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">ยังไม่มีรายการจองอาคารสถานที่ในเดือน ${THAI_MONTHS[state.calMonth]} ${state.calYear + 543}</div>`;
+        return;
+      }
+
+      const visibleList = monthBookings.slice(0, state.monthlyLimit);
+      const remaining = monthBookings.length - visibleList.length;
+
+      const itemsHtml = visibleList.map(b => {
+        const badge = b.status === 'approved'
+          ? '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">อนุมัติแล้ว</span>'
+          : '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">รออนุมัติ</span>';
+        const barColor = b.status === 'approved' ? 'border-l-emerald-500' : 'border-l-amber-400';
+
+        return `
+          <div onclick="showBookingDetail('${b.id}')" class="cursor-pointer p-4 rounded-2xl border border-slate-200 border-l-4 ${barColor} bg-slate-50/40 hover:bg-pink-50/30 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                ${badge}
+                <strong class="text-brandBlue-800 text-sm sm:text-base">${escapeHtml(b.room)}</strong>
+              </div>
+              <p class="text-sm text-slate-700">${escapeHtml(b.purpose)}</p>
+              <p class="text-xs text-slate-500">
+                <i class="fa-regular fa-clock text-brandPink-500 mr-1"></i> ${formatThaiDateTime(b.startDateTime)} - ${formatThaiDateTime(b.endDateTime)}
+              </p>
+            </div>
+            <div class="text-xs text-slate-500 sm:text-right shrink-0">
+              <p class="font-medium text-slate-700">${escapeHtml(b.requesterName)}</p>
+              <p>${escapeHtml(b.department)}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      let paginationHtml = '';
+      if (remaining > 0 || state.hasMoreInDb || state.monthlyLimit > 5) {
+        paginationHtml = `
+          <div class="pt-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100">
+            <span class="text-xs text-slate-500">
+              แสดงอยู่ <strong>${visibleList.length}</strong> จาก <strong>${monthBookings.length}${state.hasMoreInDb ? '+' : ''}</strong> รายการในเดือนนี้
+            </span>
+            <div class="flex items-center gap-2">
+              ${state.monthlyLimit > 5 ? `
+                <button onclick="resetMonthlyLimit()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-medium transition">
+                  <i class="fa-solid fa-chevron-up mr-1"></i> ย่อรายการ
+                </button>
+              ` : ''}
+              ${(remaining > 0 || state.hasMoreInDb) ? `
+                <button onclick="loadMoreMonthly()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-brandBlue-600 to-brandPink-500 hover:opacity-95 text-white text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-angles-down"></i> ดูเพิ่มเติมอีก 5 รายการ
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = itemsHtml + paginationHtml;
+    }
+
+    window.loadMoreMonthly = function () {
+      state.monthlyLimit += 5;
+      if (state.hasMoreInDb && state.monthlyLimit >= state.bookings.length) {
+        state.dbFetchLimit += 10;
+        subscribeBookings();
+      } else {
+        renderMonthlyBookingList();
+      }
+    };
+
+    window.resetMonthlyLimit = function () {
+      state.monthlyLimit = 5;
+      renderMonthlyBookingList();
+    };
+
+    window.showDayBookings = function (year, month, day) {
+      const dayBookings = getBookingsForDate(year, month, day);
+      const dateTitle = `${day} ${THAI_MONTHS[month]} ${year + 543}`;
+
+      if (dayBookings.length === 0) {
+        Swal.fire({
+          title: `วันที่ ${dateTitle}`,
+          text: 'ยังไม่มีรายการจองอาคารสถานที่ในวันนี้',
+          icon: 'info',
+          showCancelButton: true,
+          confirmButtonText: 'ขอใช้อาคารสถานที่',
+          cancelButtonText: 'ปิด',
+          confirmButtonColor: '#2563eb'
+        }).then((res) => {
+          if (res.isConfirmed) openBookingWithNotice();
+        });
+        return;
+      }
+
+      const listHtml = dayBookings.map(b => {
+        const badge = b.status === 'approved'
+          ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-700">อนุมัติแล้ว</span>'
+          : '<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800">รออนุมัติ</span>';
+        return `
+          <div onclick="Swal.close(); showBookingDetail('${b.id}')" class="cursor-pointer text-left p-3 rounded-xl border border-slate-200 hover:border-brandPink-300 bg-slate-50/70 hover:bg-pink-50/40 transition mb-2">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <strong class="text-brandBlue-800 text-sm">${escapeHtml(b.room)}</strong>
+              ${badge}
+            </div>
+            <p class="text-xs text-slate-700">${escapeHtml(b.purpose)}</p>
+            <p class="text-[11px] text-slate-500 mt-1">${formatThaiDateTime(b.startDateTime)} - ${formatThaiDateTime(b.endDateTime)}</p>
+          </div>
+        `;
+      }).join('');
+
+      Swal.fire({
+        title: `รายการจองวันที่ ${dateTitle}`,
+        html: `<div class="max-h-80 overflow-y-auto pr-1">${listHtml}</div>`,
+        confirmButtonText: 'ปิดหน้าต่าง',
+        confirmButtonColor: '#2563eb'
+      });
+    };
+
+    window.showBookingDetail = function (bookingId) {
+      const b = state.bookings.find(item => item.id === bookingId);
+      if (!b) return;
+
+      const statusMap = {
+        approved: '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">อนุมัติแล้ว</span>',
+        pending: '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">รออนุมัติ</span>',
+        rejected: '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-700">ไม่อนุมัติ</span>'
+      };
+
+      const eqList = (b.approvedEquipment && b.approvedEquipment.length > 0 ? b.approvedEquipment : b.requestedEquipment) || [];
+      const eqHtml = eqList.length > 0
+        ? eqList.map(e => `<li>• ${escapeHtml(e.name)} จำนวน <strong>${e.qty}</strong></li>`).join('')
+        : '<li class="text-slate-400">ไม่ได้ขอใช้อุปกรณ์</li>';
+
+      let returnHtml = '';
+      if (b.returnStatus === 'returned_complete') {
+        returnHtml = `<div class="mt-2 p-2.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs"><strong>สถานะคืนอุปกรณ์:</strong> ส่งอุปกรณ์สมบูรณ์แล้ว</div>`;
+      } else if (b.returnStatus === 'returned_incomplete') {
+        returnHtml = `<div class="mt-2 p-2.5 rounded-xl bg-rose-50 text-rose-700 text-xs"><strong>สถานะคืนอุปกรณ์:</strong> ส่งอุปกรณ์ไม่สมบูรณ์ (${escapeHtml(b.returnNote)})</div>`;
+      }
+
+      Swal.fire({
+        title: escapeHtml(b.room),
+        html: `
+          <div class="text-left text-sm space-y-2 text-slate-700">
+            <div class="flex justify-between items-center border-b pb-2">
+              <span class="text-slate-500">สถานะคำขอ:</span>
+              ${statusMap[b.status] || ''}
+            </div>
+            <p><strong>วัตถุประสงค์:</strong> ${escapeHtml(b.purpose)}</p>
+            <p><strong>ผู้ขอใช้:</strong> ${escapeHtml(b.requesterName)} (${escapeHtml(b.department)})</p>
+            <p><strong>ติดต่อ:</strong> ${escapeHtml(b.phone)} | Line: ${escapeHtml(b.lineId)}</p>
+            <p><strong>จำนวนผู้เข้าร่วม:</strong> ${b.participants} คน</p>
+            <p><strong>เริ่มใช้:</strong> ${formatThaiDateTime(b.startDateTime)}</p>
+            <p><strong>สิ้นสุด:</strong> ${formatThaiDateTime(b.endDateTime)}</p>
+            <p><strong>รวมระยะเวลา:</strong> <span class="text-brandPink-600 font-semibold">${escapeHtml(b.durationText || '-')}</span></p>
+            <div class="bg-blue-50/70 p-3 rounded-xl">
+              <p class="font-semibold text-brandBlue-800 mb-1">รายการอุปกรณ์:</p>
+              <ul class="text-xs space-y-1">${eqHtml}</ul>
+            </div>
+            ${returnHtml}
+          </div>
+        `,
+        confirmButtonText: 'ปิดหน้าต่าง',
+        confirmButtonColor: '#2563eb'
+      });
+    };
+
+    // =========================================================================
+    // 8. BOOKING FORM LOGIC
+    // =========================================================================
+    function renderBookingFormOptions() {
+      // Rooms dropdown
+      const roomSelect = document.getElementById('req-room');
+      roomSelect.innerHTML = `<option value="">-- เลือกอาคาร/ห้อง --</option>` +
+        state.rooms.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join('');
+
+      // Equipment checkboxes with quantity
+      const eqContainer = document.getElementById('equipment-checklist');
+      eqContainer.innerHTML = state.equipment.map((eq, idx) => `
+        <div class="flex items-center justify-between gap-2 p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:border-blue-300 transition">
+          <label class="flex items-center gap-2.5 cursor-pointer flex-1 text-sm">
+            <input type="checkbox" id="eq-chk-${idx}" data-name="${escapeHtml(eq)}" onchange="toggleEqQty(${idx})" class="eq-checkbox w-4 h-4 accent-brandBlue-600 rounded" />
+            <span>${escapeHtml(eq)}</span>
+          </label>
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs text-slate-400">จำนวน</span>
+            <input type="number" id="eq-qty-${idx}" min="1" value="1" disabled class="w-16 px-2 py-1 rounded-lg border border-slate-300 text-center text-sm bg-white disabled:bg-slate-100 disabled:text-slate-400 outline-none focus:ring-2 focus:ring-brandBlue-400" />
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.toggleEqQty = function (idx) {
+      const chk = document.getElementById(`eq-chk-${idx}`);
+      const qty = document.getElementById(`eq-qty-${idx}`);
+      qty.disabled = !chk.checked;
+      if (chk.checked && (!qty.value || qty.value < 1)) qty.value = 1;
+    };
+
+    window.toggleOtherEquipment = function () {
+      const checked = document.getElementById('eq-other-check').checked;
+      document.getElementById('eq-other-box').classList.toggle('hidden', !checked);
+    };
+
+    window.calculateDuration = function () {
+      const startVal = document.getElementById('req-start').value;
+      const endVal = document.getElementById('req-end').value;
+      const out = document.getElementById('duration-text');
+
+      if (!startVal || !endVal) {
+        out.textContent = 'กรุณาเลือกวันและเวลาเริ่มต้น-สิ้นสุด';
+        out.className = '';
+        return null;
+      }
+
+      const start = new Date(startVal);
+      const end = new Date(endVal);
+      const diffMs = end.getTime() - start.getTime();
+
+      if (diffMs <= 0) {
+        out.textContent = 'วันและเวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น!';
+        out.className = 'text-rose-600';
+        return false;
+      }
+
+      const totalMinutes = Math.floor(diffMs / 60000);
+      const days = Math.floor(totalMinutes / (60 * 24));
+      const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+      const mins = totalMinutes % 60;
+
+      const parts = [];
+      if (days > 0) parts.push(`${days} วัน`);
+      if (hours > 0) parts.push(`${hours} ชั่วโมง`);
+      if (mins > 0) parts.push(`${mins} นาที`);
+
+      const text = parts.join(' ') || '0 นาที';
+      out.textContent = text;
+      out.className = 'text-brandPink-600';
+      return text;
+    };
+
+    window.handleBookingSubmit = async function (event) {
+      event.preventDefault();
+      const durationText = calculateDuration();
+      if (!durationText) {
+        Swal.fire({
+          icon: 'error',
+          title: 'วันและเวลาไม่ถูกต้อง',
+          text: 'กรุณาตรวจสอบวันและเวลาสิ้นสุดให้มากกว่าเวลาเริ่มต้น',
+          confirmButtonColor: '#ec4899'
+        });
+        return;
+      }
+
+      // Collect selected equipment
+      const requestedEquipment = [];
+      document.querySelectorAll('.eq-checkbox').forEach((chk, idx) => {
+        if (chk.checked) {
+          const qty = parseInt(document.getElementById(`eq-qty-${idx}`).value, 10) || 1;
+          requestedEquipment.push({ name: chk.dataset.name, qty });
+        }
+      });
+
+      if (document.getElementById('eq-other-check').checked) {
+        const otherName = document.getElementById('eq-other-name').value.trim();
+        const otherQty = parseInt(document.getElementById('eq-other-qty').value, 10) || 1;
+        if (otherName) {
+          requestedEquipment.push({ name: `${otherName} (อื่นๆ)`, qty: otherQty });
+        }
+      }
+
+      const bookingPayload = {
+        requesterName: document.getElementById('req-name').value.trim(),
+        phone: document.getElementById('req-phone').value.trim(),
+        lineId: document.getElementById('req-line').value.trim(),
+        department: document.getElementById('req-dept').value.trim(),
+        purpose: document.getElementById('req-purpose').value.trim(),
+        room: document.getElementById('req-room').value,
+        participants: parseInt(document.getElementById('req-participants').value, 10) || 1,
+        startDateTime: document.getElementById('req-start').value,
+        endDateTime: document.getElementById('req-end').value,
+        durationText,
+        requestedEquipment,
+        approvedEquipment: [],
+        status: 'pending',
+        returnStatus: 'not_applicable',
+        returnNote: '',
+        createdAt: Date.now()
+      };
+
+      Swal.fire({
+        title: 'กำลังบันทึกคำขอ...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      try {
+        if (!db) throw new Error('ไม่สามารถเชื่อมต่อฐานข้อมูล Firebase ได้');
+        await addDoc(collection(db, 'facility_bookings'), bookingPayload);
+
+        // Send Telegram Notification to Admin Group
+        const eqSummary = requestedEquipment.length > 0
+          ? requestedEquipment.map(e => `- ${e.name} (${e.qty})`).join('\n')
+          : 'ไม่มี';
+
+        const tgMsg =
+          `🔔 <b>มีคำขอใช้อาคารสถานที่ใหม่!</b>\n` +
+          `🏫 <b>สถานที่:</b> ${bookingPayload.room}\n` +
+          `👤 <b>ผู้ขอ:</b> ${bookingPayload.requesterName}\n` +
+          `🏢 <b>หน่วยงาน:</b> ${bookingPayload.department}\n` +
+          `📞 <b>เบอร์/Line:</b> ${bookingPayload.phone} / ${bookingPayload.lineId}\n` +
+          `📝 <b>วัตถุประสงค์:</b> ${bookingPayload.purpose}\n` +
+          `📅 <b>เริ่ม:</b> ${formatThaiDateTime(bookingPayload.startDateTime)}\n` +
+          `📅 <b>สิ้นสุด:</b> ${formatThaiDateTime(bookingPayload.endDateTime)}\n` +
+          `⏱ <b>รวมระยะเวลา:</b> ${bookingPayload.durationText}\n` +
+          `👥 <b>ผู้เข้าร่วม:</b> ${bookingPayload.participants} คน\n` +
+          `🛠 <b>อุปกรณ์ที่ขอ:</b>\n${eqSummary}\n\n` +
+          `⏳ สถานะ: รอผู้ดูแลระบบอนุมัติ`;
+
+        await sendTelegramMessage(tgMsg);
+
+        document.getElementById('booking-form').reset();
+        document.getElementById('eq-other-box').classList.add('hidden');
+        document.getElementById('duration-text').textContent = 'กรุณาเลือกวันและเวลาเริ่มต้น-สิ้นสุด';
+
+        Swal.fire({
+          icon: 'success',
+          title: 'ส่งคำขอสำเร็จ!',
+          text: 'ระบบได้บันทึกคำขอใช้อาคารสถานที่เรียบร้อยแล้ว กรุณารอผู้ดูแลระบบอนุมัติ',
+          confirmButtonColor: '#2563eb'
+        }).then(() => switchView('history'));
+      } catch (error) {
+        console.error(error);
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด',
+          text: 'ไม่สามารถบันทึกคำขอได้: ' + error.message,
+          confirmButtonColor: '#ec4899'
+        });
+      }
+    };
+
+    // =========================================================================
+    // 9. HISTORY VIEW
+    // =========================================================================
+    window.onHistoryFilterChange = function () {
+      state.historyLimit = 5;
+      // หากผู้ใช้พิมพ์ค้นหาและยังมีข้อมูลในฐานข้อมูลอีก ให้โหลดเพิ่มเพื่อความแม่นยำในการค้นหา
+      const keyword = (document.getElementById('history-search').value || '').trim();
+      if (keyword && isFirebaseConnected && state.hasMoreInDb && state.dbFetchLimit < 50) {
+        state.dbFetchLimit = 50;
+        subscribeBookings();
+        return;
+      }
+      renderHistory();
+    };
+
+    window.loadMoreHistory = function () {
+      state.historyLimit += 5;
+      if (isFirebaseConnected && state.hasMoreInDb && state.historyLimit >= state.bookings.length) {
+        state.dbFetchLimit += 10;
+        subscribeBookings();
+      } else {
+        renderHistory();
+      }
+    };
+
+    window.resetHistoryLimit = function () {
+      state.historyLimit = 5;
+      renderHistory();
+    };
+
+    window.renderHistory = function () {
+      const container = document.getElementById('history-list');
+      const keyword = (document.getElementById('history-search').value || '').toLowerCase();
+      const statusFilter = document.getElementById('history-filter').value;
+
+      const filtered = state.bookings.filter(b => {
+        const matchStatus = statusFilter === 'all' || b.status === statusFilter;
+        const matchKey = !keyword ||
+          (b.requesterName || '').toLowerCase().includes(keyword) ||
+          (b.room || '').toLowerCase().includes(keyword) ||
+          (b.department || '').toLowerCase().includes(keyword) ||
+          (b.purpose || '').toLowerCase().includes(keyword);
+        return matchStatus && matchKey;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm">ไม่พบประวัติการขอใช้ตามเงื่อนไขที่ค้นหา</div>`;
+        return;
+      }
+
+      const visibleList = filtered.slice(0, state.historyLimit);
+      const remaining = filtered.length - visibleList.length;
+
+      const itemsHtml = visibleList.map(b => {
+        let statusBadge = '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">รออนุมัติ</span>';
+        if (b.status === 'approved') statusBadge = '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">อนุมัติแล้ว</span>';
+        if (b.status === 'rejected') statusBadge = '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-700">ไม่อนุมัติ</span>';
+
+        let returnBadge = '';
+        if (b.returnStatus === 'returned_complete') {
+          returnBadge = '<span class="px-2.5 py-0.5 rounded-full text-[11px] bg-blue-100 text-brandBlue-700 font-medium"><i class="fa-solid fa-check-double mr-1"></i>คืนอุปกรณ์สมบูรณ์</span>';
+        } else if (b.returnStatus === 'returned_incomplete') {
+          returnBadge = '<span class="px-2.5 py-0.5 rounded-full text-[11px] bg-rose-100 text-rose-700 font-medium"><i class="fa-solid fa-triangle-exclamation mr-1"></i>คืนอุปกรณ์ไม่สมบูรณ์</span>';
+        }
+
+        return `
+          <div onclick="showBookingDetail('${b.id}')" class="cursor-pointer p-4 sm:p-5 rounded-2xl border border-slate-200 hover:border-brandPink-300 bg-white hover:bg-pink-50/20 shadow-xs transition flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="space-y-1.5">
+              <div class="flex flex-wrap items-center gap-2">
+                ${statusBadge}
+                ${returnBadge}
+                <h4 class="font-bold text-brandBlue-800">${escapeHtml(b.room)}</h4>
+              </div>
+              <p class="text-sm text-slate-700">${escapeHtml(b.purpose)}</p>
+              <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                <span><i class="fa-solid fa-user text-brandBlue-500 mr-1"></i> ${escapeHtml(b.requesterName)} (${escapeHtml(b.department)})</span>
+                <span><i class="fa-solid fa-users text-brandPink-500 mr-1"></i> ${b.participants} คน</span>
+                <span><i class="fa-regular fa-clock text-brandBlue-500 mr-1"></i> ${formatThaiDateTime(b.startDateTime)} (${escapeHtml(b.durationText)})</span>
+              </div>
+            </div>
+            <button class="self-start md:self-center px-3.5 py-1.5 rounded-xl bg-blue-50 text-brandBlue-700 text-xs font-medium hover:bg-blue-100 shrink-0">
+              ดูรายละเอียด <i class="fa-solid fa-chevron-right ml-1"></i>
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      let paginationHtml = '';
+      if (remaining > 0 || state.hasMoreInDb || state.historyLimit > 5) {
+        paginationHtml = `
+          <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100">
+            <span class="text-xs text-slate-500">
+              แสดงอยู่ <strong>${visibleList.length}</strong> จาก <strong>${filtered.length}${state.hasMoreInDb ? '+' : ''}</strong> รายการ
+            </span>
+            <div class="flex items-center gap-2">
+              ${state.historyLimit > 5 ? `
+                <button onclick="resetHistoryLimit()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-medium transition">
+                  <i class="fa-solid fa-chevron-up mr-1"></i> ย่อรายการ
+                </button>
+              ` : ''}
+              ${(remaining > 0 || state.hasMoreInDb) ? `
+                <button onclick="loadMoreHistory()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-brandBlue-600 to-brandPink-500 hover:opacity-95 text-white text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-angles-down"></i> ดูเพิ่มเติมอีก 5 รายการ
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = itemsHtml + paginationHtml;
+    };
+
+    // =========================================================================
+    // 10. ADMIN AUTHENTICATION (PIN HASHED IN DATABASE - NEVER HARDCODED)
+    // =========================================================================
+    function renderAdminSection() {
+      const authCard = document.getElementById('admin-auth-card');
+      const dash = document.getElementById('admin-dashboard');
+      if (state.isAdminLoggedIn) {
+        authCard.classList.add('hidden');
+        dash.classList.remove('hidden');
+        renderAdminDashboardContent();
+      } else {
+        authCard.classList.remove('hidden');
+        dash.classList.add('hidden');
+        renderAdminAuthCard();
+      }
+    }
+
+    function renderAdminAuthCard() {
+      const loginForm = document.getElementById('admin-login-form');
+      const setupForm = document.getElementById('admin-setup-form');
+      const titleEl = document.getElementById('admin-auth-title');
+
+      if (state.adminPinHash) {
+        loginForm.classList.remove('hidden');
+        setupForm.classList.add('hidden');
+        titleEl.textContent = 'เข้าสู่ระบบผู้ดูแลระบบ';
+      } else {
+        loginForm.classList.add('hidden');
+        setupForm.classList.remove('hidden');
+        titleEl.textContent = 'ตั้งค่ารหัสผ่านผู้ดูแลระบบครั้งแรก';
+      }
+    }
+
+    window.handleAdminFirstSetup = async function (event) {
+      event.preventDefault();
+      const p1 = document.getElementById('setup-pin-1').value.trim();
+      const p2 = document.getElementById('setup-pin-2').value.trim();
+
+      if (p1 !== p2) {
+        Swal.fire({ icon: 'error', title: 'รหัสผ่านไม่ตรงกัน', text: 'กรุณากรอกรหัสผ่านทั้งสองช่องให้ตรงกัน', confirmButtonColor: '#ec4899' });
+        return;
+      }
+
+      try {
+        if (!db) throw new Error('ไม่สามารถเชื่อมต่อฐานข้อมูล Firebase ได้');
+        const hashed = await hashPin(p1);
+        await setDoc(doc(db, 'facility_config', 'security'), {
+          pinHash: hashed,
+          updatedAt: Date.now()
+        }, { merge: true });
+        state.adminPinHash = hashed;
+        state.isAdminLoggedIn = true;
+        document.getElementById('admin-setup-form').reset();
+
+        Swal.fire({
+          icon: 'success',
+          title: 'ตั้งค่ารหัสผ่านสำเร็จ',
+          text: 'รหัสผ่านถูกเข้ารหัสและบันทึกลงฐานข้อมูลเรียบร้อยแล้ว',
+          confirmButtonColor: '#2563eb'
+        });
+        renderAdminSection();
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'บันทึกไม่สำเร็จ', text: err.message, confirmButtonColor: '#ec4899' });
+      }
+    };
+
+    window.handleAdminLogin = async function (event) {
+      event.preventDefault();
+      const pin = document.getElementById('admin-pin-input').value.trim();
+      const hashed = await hashPin(pin);
+
+      if (hashed === state.adminPinHash) {
+        state.isAdminLoggedIn = true;
+        document.getElementById('admin-pin-input').value = '';
+        Swal.fire({
+          icon: 'success',
+          title: 'เข้าสู่ระบบสำเร็จ',
+          text: 'ยินดีต้อนรับผู้ดูแลระบบ',
+          timer: 1400,
+          showConfirmButton: false
+        });
+        renderAdminSection();
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'รหัสผ่านไม่ถูกต้อง',
+          text: 'กรุณาลองใหม่อีกครั้ง',
+          confirmButtonColor: '#ec4899'
+        });
+      }
+    };
+
+    window.logoutAdmin = function () {
+      state.isAdminLoggedIn = false;
+      renderAdminSection();
+      Swal.fire({ icon: 'success', title: 'ออกจากระบบแอดมินแล้ว', timer: 1200, showConfirmButton: false });
+    };
+
+    // =========================================================================
+    // 11. ADMIN DASHBOARD TABS & ACTIONS
+    // =========================================================================
+    window.switchAdminTab = function (tabName) {
+      state.currentAdminTab = tabName;
+      ['approvals', 'returns', 'resources', 'settings'].forEach(t => {
+        document.getElementById(`admin-tab-${t}`).classList.toggle('hidden', t !== tabName);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (t === tabName) {
+          btn.className = 'admin-tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 bg-brandBlue-700 text-white shadow';
+        } else {
+          btn.className = 'admin-tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 bg-white text-slate-700 border border-slate-200 hover:bg-pink-50';
+        }
+      });
+      renderAdminDashboardContent();
+    };
+
+    function renderAdminDashboardContent() {
+      if (!state.isAdminLoggedIn) return;
+
+      // Update pending count badge
+      const pendingCount = state.bookings.filter(b => b.status === 'pending').length;
+      document.getElementById('badge-pending-count').textContent = pendingCount;
+
+      renderAdminApprovals();
+      renderAdminReturns();
+      renderAdminResources();
+      populateSettingsForm();
+    }
+
+    // --- TAB 1: APPROVALS ---
+    function renderAdminApprovals() {
+      const container = document.getElementById('admin-approvals-list');
+      if (state.bookings.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">ยังไม่มีคำขอในระบบ</div>`;
+        return;
+      }
+
+      container.innerHTML = state.bookings.map(b => {
+        let badge = '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">รออนุมัติ</span>';
+        if (b.status === 'approved') badge = '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">อนุมัติแล้ว</span>';
+        if (b.status === 'rejected') badge = '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-700">ไม่อนุมัติ</span>';
+
+        const eqText = (b.requestedEquipment || []).map(e => `${e.name} (${e.qty})`).join(', ') || 'ไม่มี';
+
+        return `
+          <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/40 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                ${badge}
+                <strong class="text-brandBlue-800">${escapeHtml(b.room)}</strong>
+              </div>
+              <p class="text-sm font-medium text-slate-800">${escapeHtml(b.purpose)}</p>
+              <p class="text-xs text-slate-500">
+                ผู้ขอ: ${escapeHtml(b.requesterName)} (${escapeHtml(b.department)}) | โทร: ${escapeHtml(b.phone)} | Line: ${escapeHtml(b.lineId)}
+              </p>
+              <p class="text-xs text-slate-600">
+                <i class="fa-regular fa-calendar text-brandPink-500 mr-1"></i> ${formatThaiDateTime(b.startDateTime)} - ${formatThaiDateTime(b.endDateTime)} (${escapeHtml(b.durationText)})
+              </p>
+              <p class="text-xs text-brandBlue-700">
+                <i class="fa-solid fa-toolbox mr-1"></i> อุปกรณ์ที่ขอ: ${escapeHtml(eqText)}
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+              ${b.status === 'pending' ? `
+                <button onclick="openApproveModal('${b.id}')" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold shadow-sm transition">
+                  <i class="fa-solid fa-check mr-1"></i> ระบุอุปกรณ์ & อนุมัติ
+                </button>
+                <button onclick="rejectBooking('${b.id}')" class="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold shadow-sm transition">
+                  <i class="fa-solid fa-xmark mr-1"></i> ไม่อนุมัติ
+                </button>
+              ` : `
+                <button onclick="showBookingDetail('${b.id}')" class="px-3.5 py-2 rounded-xl bg-blue-50 text-brandBlue-700 hover:bg-blue-100 text-xs font-medium">
+                  ดูรายละเอียด
+                </button>
+              `}
+              <button onclick="deleteBooking('${b.id}')" class="px-3.5 py-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-200 text-xs font-semibold transition flex items-center gap-1.5" title="ลบคำขอ (เฉพาะแอดมิน)">
+                <i class="fa-solid fa-trash-can"></i> ลบคำขอ
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Modal for Admin to specify/confirm borrowed equipment BEFORE approving
+    window.openApproveModal = async function (bookingId) {
+      const b = state.bookings.find(item => item.id === bookingId);
+      if (!b) return;
+
+      const defaultEqLines = (b.requestedEquipment || []).map(e => `${e.name} : ${e.qty}`).join('\n');
+
+      const { value: formValues, isConfirmed } = await Swal.fire({
+        title: 'ตรวจสอบและระบุอุปกรณ์ที่อนุมัติให้ยืม',
+        html: `
+          <div class="text-left space-y-3 text-sm">
+            <div class="bg-blue-50 p-3 rounded-xl text-xs text-brandBlue-800">
+              <strong>สถานที่:</strong> ${escapeHtml(b.room)}<br>
+              <strong>ผู้ขอ:</strong> ${escapeHtml(b.requesterName)}
+            </div>
+            <div>
+              <label class="block font-medium text-slate-700 mb-1">รายการอุปกรณ์ที่อนุมัติให้ยืม (รูปแบบ: ชื่ออุปกรณ์ : จำนวน ต่อ 1 บรรทัด)</label>
+              <textarea id="swal-approved-eq" rows="5" class="w-full p-3 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-brandBlue-400" placeholder="เช่น&#10;ไมโครโฟนไร้สาย : 2&#10;โปรเจคเตอร์ : 1">${escapeHtml(defaultEqLines)}</textarea>
+              <p class="text-[11px] text-slate-400 mt-1">* หากไม่มีการยืมอุปกรณ์ สามารถเว้นว่างไว้ได้</p>
+            </div>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'ยืนยันอนุมัติคำขอ',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#10b981',
+        preConfirm: () => {
+          const raw = document.getElementById('swal-approved-eq').value.trim();
+          const parsed = [];
+          if (raw) {
+            raw.split('\n').forEach(line => {
+              const clean = line.trim();
+              if (!clean) return;
+              const parts = clean.split(':');
+              const name = parts[0].trim();
+              const qty = parts[1] ? (parseInt(parts[1].trim(), 10) || 1) : 1;
+              if (name) parsed.push({ name, qty });
+            });
+          }
+          return parsed;
+        }
+      });
+
+      if (!isConfirmed) return;
+
+      try {
+        if (!db) throw new Error('ไม่สามารถเชื่อมต่อฐานข้อมูล Firebase ได้');
+        const updateData = {
+          status: 'approved',
+          approvedEquipment: formValues,
+          returnStatus: formValues.length > 0 ? 'pending_return' : 'not_applicable',
+          approvedAt: Date.now()
+        };
+
+        await updateDoc(doc(db, 'facility_bookings', bookingId), updateData);
+
+        const eqMsg = formValues.length > 0
+          ? formValues.map(e => `- ${e.name} (${e.qty})`).join('\n')
+          : 'ไม่มี';
+
+        await sendTelegramMessage(
+          `✅ <b>อนุมัติคำขอใช้อาคารสถานที่แล้ว</b>\n` +
+          `🏫 <b>สถานที่:</b> ${b.room}\n` +
+          `👤 <b>ผู้ขอ:</b> ${b.requesterName}\n` +
+          `📅 <b>เวลา:</b> ${formatThaiDateTime(b.startDateTime)}\n` +
+          `🛠 <b>อุปกรณ์ที่อนุมัติให้ยืม:</b>\n${eqMsg}`
+        );
+
+        Swal.fire({ icon: 'success', title: 'อนุมัติคำขอเรียบร้อยแล้ว', confirmButtonColor: '#2563eb' });
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.message, confirmButtonColor: '#ec4899' });
+      }
+    };
+
+    window.rejectBooking = async function (bookingId) {
+      const b = state.bookings.find(item => item.id === bookingId);
+      if (!b) return;
+
+      const res = await Swal.fire({
+        title: 'ยืนยันไม่อนุมัติคำขอ?',
+        text: `คุณต้องการปฏิเสธคำขอใช้ ${b.room} ของ ${b.requesterName} ใช่หรือไม่`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'ไม่อนุมัติ',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#ef4444'
+      });
+
+      if (!res.isConfirmed) return;
+
+      try {
+        if (!db) throw new Error('ไม่สามารถเชื่อมต่อฐานข้อมูล Firebase ได้');
+        await updateDoc(doc(db, 'facility_bookings', bookingId), { status: 'rejected' });
+        Swal.fire({ icon: 'success', title: 'ดำเนินการเรียบร้อยแล้ว', confirmButtonColor: '#2563eb' });
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.message, confirmButtonColor: '#ec4899' });
+      }
+    };
+
+    window.deleteBooking = async function (bookingId) {
+      // ตรวจสอบสิทธิ์: อนุญาตให้ลบคำขอได้เฉพาะผู้ดูแลระบบที่เข้าสู่ระบบแล้วเท่านั้น
+      if (!state.isAdminLoggedIn) {
+        Swal.fire({
+          icon: 'error',
+          title: 'ไม่มีสิทธิ์ดำเนินการ',
+          text: 'สิทธิ์การลบคำขอสงวนไว้สำหรับผู้ดูแลระบบ (Admin) เท่านั้น',
+          confirmButtonColor: '#ec4899'
+        });
+        return;
+      }
+
+      const b = state.bookings.find(item => item.id === bookingId);
+      const res = await Swal.fire({
+        title: 'ยืนยันการลบคำขอ?',
+        html: b ? `<div class="text-sm text-slate-600">คุณต้องการลบคำขอใช้ <strong>${escapeHtml(b.room)}</strong><br>ของ <strong>${escapeHtml(b.requesterName)}</strong> ใช่หรือไม่?</div>` : 'ข้อมูลที่ลบแล้วจะไม่สามารถกู้คืนได้',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'ยืนยันลบคำขอ',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#ef4444'
+      });
+      if (!res.isConfirmed) return;
+
+      try {
+        if (!db) throw new Error('ไม่สามารถเชื่อมต่อฐานข้อมูล Firebase ได้');
+        await deleteDoc(doc(db, 'facility_bookings', bookingId));
+        Swal.fire({ icon: 'success', title: 'ลบคำขอสำเร็จ', timer: 1300, showConfirmButton: false });
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'ลบไม่สำเร็จ', text: err.message, confirmButtonColor: '#ec4899' });
+      }
+    };
+
+    // --- TAB 2: EQUIPMENT RETURN SUBSYSTEM ---
+    function renderAdminReturns() {
+      const container = document.getElementById('admin-returns-list');
+      const approvedBookings = state.bookings.filter(b => b.status === 'approved');
+
+      if (approvedBookings.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">ยังไม่มีรายการที่อนุมัติสำหรับบันทึกส่งคืนอุปกรณ์</div>`;
+        return;
+      }
+
+      container.innerHTML = approvedBookings.map(b => {
+        const eqList = (b.approvedEquipment && b.approvedEquipment.length > 0 ? b.approvedEquipment : b.requestedEquipment) || [];
+        const isReturned = b.returnStatus === 'returned_complete' || b.returnStatus === 'returned_incomplete';
+
+        const eqTags = eqList.length > 0
+          ? eqList.map(e => `<span class="inline-block bg-blue-50 text-brandBlue-700 border border-blue-200 px-2.5 py-1 rounded-lg text-xs font-medium">${escapeHtml(e.name)} × ${e.qty}</span>`).join(' ')
+          : '<span class="text-xs text-slate-400">ไม่มีรายการอุปกรณ์ที่ยืม</span>';
+
+        return `
+          <div class="p-5 rounded-2xl border ${isReturned ? 'border-emerald-200 bg-emerald-50/30' : 'border-pink-200 bg-white'} space-y-3 shadow-xs">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div>
+                <h4 class="font-bold text-brandBlue-800">${escapeHtml(b.room)} - <span class="font-normal text-slate-600">${escapeHtml(b.requesterName)}</span></h4>
+                <p class="text-xs text-slate-500">${formatThaiDateTime(b.startDateTime)} ถึง ${formatThaiDateTime(b.endDateTime)}</p>
+              </div>
+              <div>
+                ${b.returnStatus === 'returned_complete'
+                  ? '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700"><i class="fa-solid fa-circle-check mr-1"></i>ยืนยันส่งคืนแล้ว (สมบูรณ์)</span>'
+                  : b.returnStatus === 'returned_incomplete'
+                  ? '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-700"><i class="fa-solid fa-circle-exclamation mr-1"></i>ยืนยันส่งคืนแล้ว (ไม่สมบูรณ์)</span>'
+                  : '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800"><i class="fa-solid fa-clock mr-1"></i>รอส่งคืนอุปกรณ์</span>'
+                }
+              </div>
+            </div>
+
+            <div>
+              <p class="text-xs font-semibold text-slate-600 mb-1.5">รายการอุปกรณ์ที่ยืม:</p>
+              <div class="flex flex-wrap gap-1.5">${eqTags}</div>
+            </div>
+
+            ${isReturned ? `
+              ${b.returnNote ? `<div class="text-xs bg-rose-50 text-rose-700 p-3 rounded-xl border border-rose-100"><strong>หมายเหตุสภาพอุปกรณ์:</strong> ${escapeHtml(b.returnNote)}</div>` : ''}
+            ` : `
+              <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <p class="text-xs font-semibold text-slate-700">บันทึกผลการตรวจสอบอุปกรณ์ส่งคืน:</p>
+                <div class="flex flex-wrap gap-4 text-sm">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="ret-cond-${b.id}" value="returned_complete" checked onchange="toggleReturnNote('${b.id}', false)" class="accent-emerald-600 w-4 h-4" />
+                    <span class="text-emerald-700 font-medium">ส่งอุปกรณ์สมบูรณ์</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="ret-cond-${b.id}" value="returned_incomplete" onchange="toggleReturnNote('${b.id}', true)" class="accent-rose-600 w-4 h-4" />
+                    <span class="text-rose-600 font-medium">ส่งอุปกรณ์ไม่สมบูรณ์ (ระบุรายละเอียด)</span>
+                  </label>
+                </div>
+                <div id="ret-note-wrap-${b.id}" class="hidden">
+                  <textarea id="ret-note-${b.id}" rows="2" placeholder="ระบุอุปกรณ์ที่ชำรุด สูญหาย หรือส่งคืนไม่ครบ..." class="w-full px-3.5 py-2 rounded-xl border border-rose-300 text-sm outline-none focus:ring-2 focus:ring-rose-400 bg-white"></textarea>
+                </div>
+                <div class="flex justify-end">
+                  <button onclick="confirmEquipmentReturn('${b.id}')" class="px-5 py-2 rounded-xl bg-gradient-to-r from-brandBlue-600 to-brandPink-500 text-white text-xs sm:text-sm font-semibold shadow hover:opacity-95 transition">
+                    <i class="fa-solid fa-check-double mr-1.5"></i> ยืนยันส่งคืนอุปกรณ์แล้ว
+                  </button>
+                </div>
+              </div>
+            `}
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.toggleReturnNote = function (bookingId, show) {
+      document.getElementById(`ret-note-wrap-${bookingId}`).classList.toggle('hidden', !show);
+    };
+
+    window.confirmEquipmentReturn = async function (bookingId) {
+      const b = state.bookings.find(item => item.id === bookingId);
+      if (!b) return;
+
+      const selectedRadio = document.querySelector(`input[name="ret-cond-${bookingId}"]:checked`);
+      const condition = selectedRadio ? selectedRadio.value : 'returned_complete';
+      const note = (document.getElementById(`ret-note-${bookingId}`)?.value || '').trim();
+
+      if (condition === 'returned_incomplete' && !note) {
+        Swal.fire({
+          icon: 'error',
+          title: 'กรุณากรอกรายละเอียด',
+          text: 'กรณีส่งอุปกรณ์ไม่สมบูรณ์ กรุณาระบุข้อความรายละเอียดก่อนยืนยัน',
+          confirmButtonColor: '#ec4899'
+        });
+        return;
+      }
+
+      try {
+        if (!db) throw new Error('ไม่สามารถเชื่อมต่อฐานข้อมูล Firebase ได้');
+        const updateData = {
+          returnStatus: condition,
+          returnNote: condition === 'returned_incomplete' ? note : '',
+          returnedAt: Date.now()
+        };
+
+        await updateDoc(doc(db, 'facility_bookings', bookingId), updateData);
+
+        await sendTelegramMessage(
+          `📦 <b>บันทึกส่งคืนอุปกรณ์แล้ว</b>\n` +
+          `🏫 <b>สถานที่:</b> ${b.room}\n` +
+          `👤 <b>ผู้ขอ:</b> ${b.requesterName}\n` +
+          `📌 <b>สภาพอุปกรณ์:</b> ${condition === 'returned_complete' ? 'สมบูรณ์' : 'ไม่สมบูรณ์ (' + note + ')'}`
+        );
+
+        Swal.fire({
+          icon: 'success',
+          title: 'ยืนยันการส่งคืนอุปกรณ์สำเร็จ',
+          confirmButtonColor: '#2563eb'
+        });
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.message, confirmButtonColor: '#ec4899' });
+      }
+    };
+
+    // --- TAB 3: ROOMS & EQUIPMENT ---
+    function renderAdminResources() {
+      document.getElementById('admin-rooms-list').innerHTML = state.rooms.map((r, i) => `
+        <li class="py-2.5 flex items-center justify-between text-sm">
+          <span class="text-slate-700">${escapeHtml(r)}</span>
+          <button onclick="removeRoom(${i})" class="text-rose-500 hover:text-rose-700 px-2 py-1 rounded-lg hover:bg-rose-50 transition">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </li>
+      `).join('');
+
+      document.getElementById('admin-eq-list').innerHTML = state.equipment.map((e, i) => `
+        <li class="py-2.5 flex items-center justify-between text-sm">
+          <span class="text-slate-700">${escapeHtml(e)}</span>
+          <button onclick="removeEquipment(${i})" class="text-rose-500 hover:text-rose-700 px-2 py-1 rounded-lg hover:bg-rose-50 transition">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </li>
+      `).join('');
+    }
+
+    async function persistConfigToDb() {
+      if (!db) throw new Error('ไม่สามารถเชื่อมต่อฐานข้อมูล Firebase ได้');
+      await setDoc(doc(db, 'facility_config', 'general'), {
+        ...state.settings,
+        rooms: state.rooms,
+        equipment: state.equipment,
+        updatedAt: Date.now()
+      }, { merge: true });
+      refreshAllUI();
+    }
+
+    window.addRoom = async function () {
+      const input = document.getElementById('new-room-input');
+      const val = input.value.trim();
+      if (!val) return;
+      try {
+        state.rooms.push(val);
+        input.value = '';
+        await persistConfigToDb();
+        Swal.fire({ icon: 'success', title: 'เพิ่มอาคาร/ห้องสำเร็จ', timer: 1200, showConfirmButton: false });
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'เพิ่มไม่สำเร็จ', text: err.message, confirmButtonColor: '#ec4899' });
+      }
+    };
+
+    window.removeRoom = async function (idx) {
+      try {
+        state.rooms.splice(idx, 1);
+        await persistConfigToDb();
+        Swal.fire({ icon: 'success', title: 'ลบอาคาร/ห้องสำเร็จ', timer: 1200, showConfirmButton: false });
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'ลบไม่สำเร็จ', text: err.message, confirmButtonColor: '#ec4899' });
+      }
+    };
+
+    window.addEquipment = async function () {
+      const input = document.getElementById('new-eq-input');
+      const val = input.value.trim();
+      if (!val) return;
+      try {
+        state.equipment.push(val);
+        input.value = '';
+        await persistConfigToDb();
+        Swal.fire({ icon: 'success', title: 'เพิ่มรายการอุปกรณ์สำเร็จ', timer: 1200, showConfirmButton: false });
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'เพิ่มไม่สำเร็จ', text: err.message, confirmButtonColor: '#ec4899' });
+      }
+    };
+
+    window.removeEquipment = async function (idx) {
+      try {
+        state.equipment.splice(idx, 1);
+        await persistConfigToDb();
+        Swal.fire({ icon: 'success', title: 'ลบรายการอุปกรณ์สำเร็จ', timer: 1200, showConfirmButton: false });
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'ลบไม่สำเร็จ', text: err.message, confirmButtonColor: '#ec4899' });
+      }
+    };
+
+    // --- TAB 4: SETTINGS & TELEGRAM ---
+    function populateSettingsForm() {
+      document.getElementById('setting-marquee').value = state.settings.marqueeText || '';
+      document.getElementById('setting-popup').value = state.settings.popupMessage || '';
+      document.getElementById('setting-tg-token').value = state.settings.telegramBotToken || '';
+      document.getElementById('setting-tg-chatid').value = state.settings.telegramChatId || '';
+      document.getElementById('setting-tg-enabled').checked = !!state.settings.telegramEnabled;
+    }
+
+    window.saveGeneralSettings = async function () {
+      try {
+        state.settings.marqueeText = document.getElementById('setting-marquee').value.trim();
+        state.settings.popupMessage = document.getElementById('setting-popup').value.trim();
+        await persistConfigToDb();
+        Swal.fire({ icon: 'success', title: 'บันทึกข้อความสำเร็จ', confirmButtonColor: '#2563eb' });
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'บันทึกไม่สำเร็จ', text: err.message, confirmButtonColor: '#ec4899' });
+      }
+    };
+
+    window.saveTelegramSettings = async function () {
+      try {
+        state.settings.telegramBotToken = document.getElementById('setting-tg-token').value.trim();
+        state.settings.telegramChatId = document.getElementById('setting-tg-chatid').value.trim();
+        state.settings.telegramEnabled = document.getElementById('setting-tg-enabled').checked;
+        await persistConfigToDb();
+        Swal.fire({ icon: 'success', title: 'บันทึกการตั้งค่า Telegram สำเร็จ', confirmButtonColor: '#2563eb' });
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'บันทึกไม่สำเร็จ', text: err.message, confirmButtonColor: '#ec4899' });
+      }
+    };
+
+    window.testTelegramNotification = async function () {
+      state.settings.telegramBotToken = document.getElementById('setting-tg-token').value.trim();
+      state.settings.telegramChatId = document.getElementById('setting-tg-chatid').value.trim();
+      state.settings.telegramEnabled = true;
+
+      if (!state.settings.telegramBotToken || !state.settings.telegramChatId) {
+        Swal.fire({ icon: 'error', title: 'ข้อมูลไม่ครบ', text: 'กรุณากรอก Bot Token และ Group Chat ID ก่อนทดสอบ', confirmButtonColor: '#ec4899' });
+        return;
+      }
+
+      Swal.fire({ title: 'กำลังส่งข้อความทดสอบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      const res = await sendTelegramMessage('✅ <b>ทดสอบการเชื่อมต่อสำเร็จ!</b>\nระบบขอใช้อาคารสถานที่ โรงเรียนศรีวารินทร์ พร้อมแจ้งเตือนผ่านกลุ่ม Telegram แล้ว');
+      if (res.ok) {
+        Swal.fire({ icon: 'success', title: 'ส่งข้อความเข้ากลุ่ม Telegram สำเร็จ!', confirmButtonColor: '#2563eb' });
+      } else {
+        Swal.fire({ icon: 'error', title: 'ส่งไม่สำเร็จ', text: res.error || 'กรุณาตรวจสอบ Bot Token และ Chat ID', confirmButtonColor: '#ec4899' });
+      }
+    };
+
+    window.changeAdminPin = async function () {
+      const newPin = document.getElementById('change-pin-input').value.trim();
+      if (newPin.length < 6) {
+        Swal.fire({ icon: 'error', title: 'รหัสผ่านสั้นเกินไป', text: 'กรุณากรอกรหัสผ่านอย่างน้อย 6 หลัก', confirmButtonColor: '#ec4899' });
+        return;
+      }
+      try {
+        if (!db) throw new Error('ไม่สามารถเชื่อมต่อฐานข้อมูล Firebase ได้');
+        const hashed = await hashPin(newPin);
+        await setDoc(doc(db, 'facility_config', 'security'), {
+          pinHash: hashed,
+          updatedAt: Date.now()
+        }, { merge: true });
+        state.adminPinHash = hashed;
+        document.getElementById('change-pin-input').value = '';
+        Swal.fire({ icon: 'success', title: 'อัปเดตรหัสผ่านใหม่สำเร็จ', confirmButtonColor: '#2563eb' });
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: 'อัปเดตไม่สำเร็จ', text: err.message, confirmButtonColor: '#ec4899' });
+      }
+    };
+
+    // =========================================================================
+    // 12. MASTER UI REFRESH
+    // =========================================================================
+    function refreshAllUI() {
+      // Marquee
+      document.getElementById('marquee-text').textContent = state.settings.marqueeText;
+
+      // Stats
+      document.getElementById('stat-total').textContent = state.bookings.length;
+      document.getElementById('stat-approved').textContent = state.bookings.filter(b => b.status === 'approved').length;
+      document.getElementById('stat-pending').textContent = state.bookings.filter(b => b.status === 'pending').length;
+      document.getElementById('stat-returned').textContent = state.bookings.filter(b =>
+        b.returnStatus === 'returned_complete' || b.returnStatus === 'returned_incomplete'
+      ).length;
+
+      renderCalendar();
+      if (state.currentView === 'booking') renderBookingFormOptions();
+      if (state.currentView === 'history') renderHistory();
+      if (state.currentView === 'admin' && state.isAdminLoggedIn) renderAdminDashboardContent();
+    }
+
+    // Boot Application
+    window.addEventListener('DOMContentLoaded', () => {
+      refreshAllUI();
+      initRealtimeListeners();
+    });
+  </script>
+</body>
+</html>
